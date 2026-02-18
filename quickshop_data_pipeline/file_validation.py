@@ -20,5 +20,5 @@ def perform_validation(row):
     if row['city'].strip().lower() not in ['mumbai','bangalore']:
         reason.append('city not correct')
 
-    return ','.join(reason) if len(reason) > 0 else None
+    return ';'.join(reason) if len(reason) > 0 else None
 

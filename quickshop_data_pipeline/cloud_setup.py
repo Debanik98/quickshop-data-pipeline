@@ -5,7 +5,7 @@ import os
 def create_date_folders():
     s3 = fo.initialize_s3()
 
-    bucket = 'namastekart-analytics'
+    bucket = 'quickshop-analytics'
     folders = ['product_master_data/','incoming_files/','rejected_files/','success_files/']
     date_folder = dt.date.today().strftime(format='%Y%m%d')
 

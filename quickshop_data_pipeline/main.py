@@ -9,7 +9,7 @@ import datetime as dt
 from sqlalchemy import create_engine
 
 def main():
-    bucket = 'namastekart-analytics'
+    bucket = 'quickshop-analytics'
     folders = ['product_master_data/','incoming_files/','rejected_files/','success_files/']
 
     creation_flag = cs.create_date_folders()

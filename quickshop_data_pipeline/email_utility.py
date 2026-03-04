@@ -39,4 +39,3 @@ def send_mail(msg: mt):
         server.starttls()  # Secure the connection
         server.login(fo.msg_sender, fo.msg_password)  # Use app password if Gmail
         server.send_message(msg)
-

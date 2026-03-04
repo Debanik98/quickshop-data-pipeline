@@ -56,7 +56,7 @@ def move_files(s3, bucket_name, src_bucket_name, source_key, destination_key):
     Args:
         s3: S3 client object.
         bucket_name: Destination bucket name.
-        src_bucket_name: Source bucket name (currently unused).
+        src_bucket_name: Source bucket name.
         source_key: Source file key.
         destination_key: Destination file key.
     """
@@ -65,7 +65,7 @@ def move_files(s3, bucket_name, src_bucket_name, source_key, destination_key):
         CopySource={'Bucket': bucket_name, 'Key': source_key},
         Key=destination_key)
     # Delete the original file
-    s3.delete_object(Bucket=bucket_name, Key=source_key)
+    s3.delete_object(Bucket=src_bucket_name, Key=source_key)
 
 def delete_files(s3, bucket_name, source_key):
     """Delete file from S3 bucket.
@@ -97,4 +97,3 @@ def store_data(s3, bucket, path, body):
         body: File content/body to store.
     """
     s3.put_object(Bucket=bucket, Key=path, Body=body)
-

@@ -29,5 +29,3 @@ def perform_validation(row):
         reason.append('city not correct')
 
     return ';'.join(reason) if len(reason) > 0 else None
-
-

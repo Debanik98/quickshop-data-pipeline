@@ -1,5 +1,7 @@
-import boto3 as bt
+"""File operation module for S3 and database operations."""
 import configparser as cp
+
+import boto3 as bt
 
 # reading config.ini
 config = cp.ConfigParser()
@@ -20,39 +22,79 @@ db_pass = config['database']['password']
 db_dbname = config['database']['database_name']
 
 
-# function to initialize S3
 def initialize_s3():
+    """Initialize and return an S3 client."""
     s3 = bt.client("s3",
                     aws_access_key_id = aws_access_key_id,
                     aws_secret_access_key = aws_secret_access_key)
     return s3
 
-def read_folder(s3,bucket,folder):
+def read_folder(s3, bucket, folder):
+    """Read list of files from S3 folder.
+
+    Args:
+        s3: S3 client object.
+        bucket: S3 bucket name.
+        folder: Folder path in S3.
+
+    Returns:
+        List of file keys in the folder.
+    """
     try:
         file_list = []
-        response = s3.list_objects_v2(Bucket=bucket,Prefix=folder)
+        response = s3.list_objects_v2(Bucket=bucket, Prefix=folder)
         for obj in response.get("Contents", []):
             file_list.append(obj["Key"])
-
-    except Exception as e:
+    except FileNotFoundError:
         print(f'{folder} not present in bucket {bucket}')
-    
+
     return file_list[1:]
 
-def move_files(s3,bucket_name,src_bucket_name,source_key,destination_key):
+def move_files(s3, bucket_name, src_bucket_name, source_key, destination_key):
+    """Move file within S3 bucket.
+
+    Args:
+        s3: S3 client object.
+        bucket_name: Destination bucket name.
+        src_bucket_name: Source bucket name (currently unused).
+        source_key: Source file key.
+        destination_key: Destination file key.
+    """
     s3.copy_object(
-    Bucket=bucket_name,
-    CopySource={'Bucket': bucket_name, 'Key': source_key},
-    Key=destination_key)
+        Bucket=bucket_name,
+        CopySource={'Bucket': bucket_name, 'Key': source_key},
+        Key=destination_key)
     # Delete the original file
     s3.delete_object(Bucket=bucket_name, Key=source_key)
 
-def delete_files(s3,bucket_name,source_key):
-    # Delete the file
+def delete_files(s3, bucket_name, source_key):
+    """Delete file from S3 bucket.
+
+    Args:
+        s3: S3 client object.
+        bucket_name: Bucket name.
+        source_key: File key to delete.
+    """
     s3.delete_object(Bucket=bucket_name, Key=source_key)
 
-def create_files(s3,bucket,path):
-    s3.put_object(Bucket=bucket,Key=path)
+def create_files(s3, bucket, path):
+    """Create empty file/folder in S3.
 
-def store_data(s3,bucket,path,body):
-    s3.put_object(Bucket=bucket,Key=path,Body=body)
+    Args:
+        s3: S3 client object.
+        bucket: Bucket name.
+        path: File/folder path.
+    """
+    s3.put_object(Bucket=bucket, Key=path)
+
+def store_data(s3, bucket, path, body):
+    """Store data/file in S3.
+
+    Args:
+        s3: S3 client object.
+        bucket: Bucket name.
+        path: File path in S3.
+        body: File content/body to store.
+    """
+    s3.put_object(Bucket=bucket, Key=path, Body=body)
+

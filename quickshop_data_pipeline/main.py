@@ -1,14 +1,22 @@
-import file_operation as fo
-import file_validation as fv
-import email_utility as eu
-import cloud_setup as cs
-import pandas as pd
+"""Main data pipeline module for processing and validating sales data."""
+import datetime as dt
 import io
 import sys
-import datetime as dt
+
+import pandas as pd
 from sqlalchemy import create_engine
 
+import cloud_setup as cs
+import email_utility as eu
+import file_operation as fo
+import file_validation as fv
+
 def main():
+    """Main execution function for data pipeline.
+
+    Processes incoming sales data files, validates them against master data,
+    handles errors, and stores valid data in the database.
+    """
     bucket = 'quickshop-analytics'
     folders = ['product_master_data/','incoming_files/','rejected_files/','success_files/']
 
@@ -40,7 +48,6 @@ def main():
 
     date_prefix = dt.date.today().strftime("%Y%m%d")
     full_path = f'{folders[1]}{date_prefix}/'
-    #full_path = f'{folders[1]}20260211/'
 
 
     # read the incoming data
@@ -69,14 +76,13 @@ def main():
                                         ,'sales':'int32'
                                         ,'city':'string'})
         
-        input_data['order_date'] = pd.to_datetime(input_data['order_date']
-                                                  ,format='%d-%m-%Y'
-                                                  ,errors='coerce').dt.date
+        input_data['order_date'] = pd.to_datetime(
+            input_data['order_date'], format='%d-%m-%Y', errors='coerce').dt.date
 
-        df_join = input_data.merge(master_data,on='product_id',how='left')
+        df_join = input_data.merge(master_data, on='product_id', how='left')
 
-        #validation
-        df_join['Reason'] = df_join.apply(fv.perform_validation,axis=1)
+        # Validation
+        df_join['Reason'] = df_join.apply(fv.perform_validation, axis=1)
 
         print(df_join.head())
 
@@ -86,10 +92,10 @@ def main():
 
         total_files += 1
 
-        # file movement
+        # File movement
         if not df_error_row.empty:
             error_files += 1
-            #move file to rejected folder
+            # Move file to rejected folder
             move_path = f'{folders[2]}{date_prefix}/'
             fo.move_files(s3=s3,
                           bucket_name=bucket,
@@ -104,34 +110,36 @@ def main():
                 body=io.BytesIO(df_error_row.to_csv(index=False).encode())
             )
         else:
-            #move file to success folder
+            # Move file to success folder
             move_path = f'{folders[3]}{date_prefix}/'
             fo.move_files(s3=s3,
                           bucket_name=bucket,
                           src_bucket_name=bucket,
                           source_key=full_path + filename,
                           destination_key=move_path + filename)
-            
-            #store the data in DB
-            try:
-                df_orders = df_join[['order_id','order_date','product_id','quantity','sales','city']]
-                path = f'postgresql://{fo.db_user}:{fo.db_pass}@{fo.db_host}:{fo.db_port}/{fo.db_dbname}'
-                engine = create_engine(path)
-                df_orders.to_sql('order_history',engine,if_exists='append',index=False)
-                print(f'Data inserted to table successfully')
-            except Exception as e:
-                print(f'Failed to store data. Reason {e}')
 
-    # send confirmation mail
+            # Store the data in DB
+            try:
+                df_orders = df_join[['order_id', 'order_date', 'product_id',
+                                      'quantity', 'sales', 'city']]
+                path = (f'postgresql://{fo.db_user}:{fo.db_pass}'
+                        f'@{fo.db_host}:{fo.db_port}/{fo.db_dbname}')
+                engine = create_engine(path)
+                df_orders.to_sql('order_history', engine, if_exists='append',
+                                 index=False)
+                print('Data inserted to table successfully')
+            except (OSError, ValueError) as e:
+                print(f'Failed to store data. Reason: {e}')
+
+    # Send confirmation mail
     try:
-        msg = eu.setup_mail(total_files=total_files,error_files=error_files)
+        msg = eu.setup_mail(total_files=total_files, error_files=error_files)
         eu.send_mail(msg=msg)
-        print(f'Confirmation email sent')
-    except Exception as e:
-        print(f'Email service failed Reason: {e}')
+        print('Confirmation email sent')
+    except (OSError, ValueError) as e:
+        print(f'Email service failed. Reason: {e}')
 
 
 if __name__ == '__main__':
-
     main()
 

@@ -1,8 +1,11 @@
-import file_operation as fo
+"""Cloud setup module for managing S3 folder creation and file uploads."""
 import datetime as dt
 import os
 
+import file_operation as fo
+
 def create_date_folders():
+    """Create date-based folders in S3 and upload files from local directory."""
     s3 = fo.initialize_s3()
 
     bucket = 'quickshop-analytics'
@@ -14,15 +17,15 @@ def create_date_folders():
             path = f'{i}{date_folder}/'
             fo.create_files(s3=s3,bucket=bucket,path=path)
             print(f'folder creation completed at {path}')
-    except Exception as e:
+    except FileNotFoundError as e:
         print(f'folder creation failed. Reason: {e}')
         return False
 
-    #Place files in S3 incoming folder
-    source_path = f'C:\\Users\\deban\\OneDrive\\Desktop\\file'
+    # Place files in S3 incoming folder
+    source_path = 'C:\\Users\\deban\\OneDrive\\Desktop\\file'
     base_dest_path = f'{folders[1]}{date_folder}/'
 
-    for root, dirs, files in os.walk(source_path):
+    for root, _, files in os.walk(source_path):
         for file in files:
             local_path = os.path.join(root, file)
             dest_path = base_dest_path+file
@@ -32,10 +35,8 @@ def create_date_folders():
             except FileNotFoundError:
                 print("The file was not found")
                 return False
-            except Exception as e:
+            except IOError as e:
                 print(f"upload failure: {e}")
                 return False
 
     return True
-
-    

@@ -1,12 +1,16 @@
 """File operation module for S3 and database operations."""
 import configparser as cp
-
+import sys
+import os
 import boto3 as bt
 
 # reading config.ini
 config = cp.ConfigParser()
+if not os.path.exists('cloud_setup.py'):
+    print(f"Error: Configuration file not found.{os.path}")
+    sys.exit(1)
 config.read('config.ini')
-aws_access_key_id = config["aws"]["aws_access_key_id"]
+aws_access_key_id = config['aws']["aws_access_key_id"]
 aws_secret_access_key = config["aws"]["aws_secret_access_key"]
 
 msg_port = config['email']['smtp_port']

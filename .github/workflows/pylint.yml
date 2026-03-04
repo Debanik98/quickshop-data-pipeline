@@ -1,0 +1,23 @@
+name: Lint
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v2
+
+    - name: Install dependencies
+      run: |
+        pip install boto3 pandas sqlalchemy
+
+    - name: Run Pylint
+      run: |
+        pip install pylint
+        pylint **/*.py

@@ -1,7 +1,5 @@
 """File operation module for S3 and database operations."""
 import configparser as cp
-import sys
-import os
 import boto3 as bt
 
 # reading config.ini

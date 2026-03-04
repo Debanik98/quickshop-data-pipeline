@@ -29,7 +29,7 @@ def get_master_data(config: PipelineConfig):
 
     obj = config.s3.get_object(Bucket=config.bucket, Key=master_files[0])
     body = obj['Body'].read()
-    
+
     df = pd.read_csv(io.BytesIO(body))
     df = df.loc[:, ['product_id', 'price']]
     return df.astype({'price': 'int32', 'product_id': 'int32'})
@@ -56,7 +56,7 @@ def process_single_file(config: PipelineConfig, file_key: str, master_data: pd.D
     if not df_errors.empty:
         handle_rejection(config, file_key, filename, df_errors)
         return False
-    
+
     handle_success(config, file_key, filename, df_join)
     return True
 
@@ -74,7 +74,7 @@ def handle_success(config: PipelineConfig, file_key: str, filename: str, df_join
     fo.move_files(s3=config.s3, bucket_name=config.bucket, src_bucket_name=config.bucket,
                   source_key=file_key, destination_key=move_path + filename)
     try:
-        df_orders = df_join[['order_id', 'order_date', 'product_id', 
+        df_orders = df_join[['order_id', 'order_date', 'product_id',
                              'quantity', 'sales', 'city']]
         db_url = (f'postgresql://{fo.db_user}:{fo.db_pass}'
                   f'@{fo.db_host}:{fo.db_port}/{fo.db_dbname}')
